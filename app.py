@@ -76,6 +76,7 @@ def load_data():
         ]
         
         all_data = []
+        source_type = "none"
         
         # Check if local Excel exists
         if os.path.exists(file_path):
@@ -92,17 +93,17 @@ def load_data():
              
              if all_data:
                  full_df = pd.concat(all_data, ignore_index=True)
+                 source_type = "real"
              else:
                  full_df = pd.DataFrame()
                  
         else:
             # Fallback to Demo Data (Cloud)
             if os.path.exists(demo_path):
-                st.toast("Using Anonymized Demo Data", icon="ℹ️")
                 full_df = pd.read_csv(demo_path)
+                source_type = "demo"
             else:
-                st.error("No data found. Please upload data or add demo_data.csv")
-                return pd.DataFrame()
+                return pd.DataFrame(), "missing"
 
         # Cleaning Pipeline (Shared)
         if 'Date' in full_df.columns:
@@ -114,14 +115,20 @@ def load_data():
                 full_df[c] = pd.to_numeric(full_df[c], errors='coerce').fillna(0)
                 
         full_df['YearMonth'] = full_df['Date'].dt.to_period('M')
-        return full_df
+        return full_df, source_type
         
     except Exception as e:
-        st.error(f"Error loading data: {e}")
-        return pd.DataFrame()
+        return pd.DataFrame(), "error"
 
 
-df = load_data()
+df, data_source = load_data()
+
+if data_source == "demo":
+    st.toast("Using Anonymized Demo Data", icon="ℹ️")
+elif data_source == "missing":
+    st.error("No data found. Please upload data or add demo_data.csv")
+elif data_source == "error":
+    st.error("Error loading data.")
 
 # --- Sidebar Filters ---
 st.sidebar.image("zamara_logo.png", width=150)
