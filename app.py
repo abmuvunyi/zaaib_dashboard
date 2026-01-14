@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.cluster import KMeans
@@ -63,61 +64,62 @@ st.markdown("""
 @st.cache_data
 def load_data():
     file_path = "Data/New Business report/New business report till July 2021.xlsx"
+    demo_path = "demo_data.csv"
     
-    # List of sheets that appear to be Agent/Transaction logs
-    # We exclude summaries and 'Raw data' which proved incomplete
-    target_sheets = [
-        'Patrick', 'Sheila', 'Sandra', 'Expery', 'Agnes', 
-        'Pascal', 'Direct Business', 'Ornella', 'Olivier', 
-        'Jacqueline', 'Viateur'
-    ]
-    
-    all_data = []
-    
+    # Try loading Real Data (Local)
     try:
-        # Read specific sheets to avoid loading irrelevant summaries
-        # using sheet_name=list reads them into a dict of DataFrames
-        xl = pd.read_excel(file_path, sheet_name=target_sheets, header=0)
+        # List of sheets that appear to be Agent/Transaction logs
+        target_sheets = [
+            'Patrick', 'Sheila', 'Sandra', 'Expery', 'Agnes', 
+            'Pascal', 'Direct Business', 'Ornella', 'Olivier', 
+            'Jacqueline', 'Viateur'
+        ]
         
-        for sheet, df in xl.items():
-            # Standardize columns
-            df.columns = [str(c).strip() for c in df.columns]
-            
-            # Select only needed columns to ensure concatenation works even if some extra cols vary
-            # We need: Date, Month, Client Name, Insurer Name, Policy Type, Premium, Commission, Policy No
-            # Check overlap
-            needed_cols = ['Date', 'Month', 'Client Name', 'Insurer Name', 'Policy Type', 'Premium', 'Commission', 'Policy No']
-            available_cols = [c for c in needed_cols if c in df.columns]
-            
-            if len(available_cols) > 3: # valid sheet with data
-                subset = df[available_cols].copy()
-                subset['SourceSheet'] = sheet # track origin
-                all_data.append(subset)
+        all_data = []
+        
+        # Check if local Excel exists
+        if os.path.exists(file_path):
+             xl = pd.read_excel(file_path, sheet_name=target_sheets, header=0)
+             for sheet, df in xl.items():
+                df.columns = [str(c).strip() for c in df.columns]
+                needed_cols = ['Date', 'Month', 'Client Name', 'Insurer Name', 'Policy Type', 'Premium', 'Commission', 'Policy No']
+                available_cols = [c for c in needed_cols if c in df.columns]
                 
-        if not all_data:
-            st.error("No valid data found in agent sheets.")
-            return pd.DataFrame()
-            
-        full_df = pd.concat(all_data, ignore_index=True)
-        
-        # Clean Date
+                if len(available_cols) > 3: 
+                    subset = df[available_cols].copy()
+                    subset['SourceSheet'] = sheet 
+                    all_data.append(subset)
+             
+             if all_data:
+                 full_df = pd.concat(all_data, ignore_index=True)
+             else:
+                 full_df = pd.DataFrame()
+                 
+        else:
+            # Fallback to Demo Data (Cloud)
+            if os.path.exists(demo_path):
+                st.toast("Using Anonymized Demo Data", icon="ℹ️")
+                full_df = pd.read_csv(demo_path)
+            else:
+                st.error("No data found. Please upload data or add demo_data.csv")
+                return pd.DataFrame()
+
+        # Cleaning Pipeline (Shared)
         if 'Date' in full_df.columns:
             full_df['Date'] = pd.to_datetime(full_df['Date'], errors='coerce', dayfirst=True)
             
-        # Clean Numeric
         t_cols = ['Premium', 'Commission']
         for c in t_cols:
             if c in full_df.columns:
                 full_df[c] = pd.to_numeric(full_df[c], errors='coerce').fillna(0)
                 
-        # Add derived Month/Year
         full_df['YearMonth'] = full_df['Date'].dt.to_period('M')
-        
         return full_df
         
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
+
 
 df = load_data()
 
