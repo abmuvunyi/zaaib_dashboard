@@ -1,0 +1,18 @@
+# Data
+Data/
+*.xlsx
+*.xls
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.streamlit/
+nohup.out
+nohup_new.out
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
