@@ -1,9 +1,10 @@
 # Zamara Insurance Brokers - Executive Operational Dashboard
+## Demo
+https://zaaibdashboard.streamlit.app/
 
 ![Zamara Dashboard](zamara_logo.png)
 
-## Demo
-https://zaaibdashboard.streamlit.app/
+
 ## Overview
 
 This repository contains the **Strategic Analytics Dashboard** developed for **Zamara Insurance Brokers**. This application transforms raw operational data (premiums, commissions, policies) into actionable business intelligence.
