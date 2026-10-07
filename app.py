@@ -64,7 +64,7 @@ def clean_and_combine_data(file_path: str, demo_path: str) -> tuple[pd.DataFrame
 
 def filter_dataframe(df: pd.DataFrame, date_range: tuple, selected_insurers: list, selected_products: list) -> pd.DataFrame:
     mask = np.ones(len(df), dtype=bool)
-    if date_range and date_range[0] and date_range[1] and 'Date' in df.columns:
+    if date_range and len(date_range) == 2 and date_range[0] and date_range[1] and 'Date' in df.columns:
         mask &= (df['Date'] >= pd.to_datetime(date_range[0])) & (df['Date'] <= pd.to_datetime(date_range[1]))
     if selected_insurers and 'Insurer Name' in df.columns:
         mask &= df['Insurer Name'].isin(selected_insurers)
